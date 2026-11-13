@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staff Duty Roster</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1565c0">
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f2f4f7;
+    color: #222;
+  }
+
+  header {
+    background: #1565c0;
+    color: white;
+    padding: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .company-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #headerLogo {
+    height: 40px;
+    width: auto;
+    border-radius: 6px;
+    background: white;
+    padding: 3px;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 20px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  select,
+  button,
+  input {
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+
+  button {
+    background: #1565c0;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+
+  button.secondary {
+    background: #546e7a;
+  }
+
+  main {
+    padding: 12px;
+  }
+
+  .main-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .main-tab {
+    padding: 10px 18px;
+    border-radius: 8px 8px 0 0;
+    background: #cfd8dc;
+    border: none;
+    cursor: pointer;
+    color: #333;
+  }
+
+  .main-tab.active {
+    background: #1565c0;
+    color: white;
+    font-weight: bold;
+  }
+
+  .screen {
+    display: none;
+  }
+
+  .screen.active {
+    display: block;
+  }
+
+  .card {
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .12);
+    margin-bottom: 16px;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .form-row input,
+  .form-row select {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .staff-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .staff-chip {
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    padding: 6px 10px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .staff-chip button {
+    background: #b71c1c;
+    padding: 2px 7px;
+    font-size: 12px;
+  }
+
+  .roster-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .roster-tab {
+    padding: 10px 18px;
+    border-radius: 8px 8px 0 0;
+    background: #cfd8dc;
+    border: none;
+    cursor: pointer;
+    color: #333;
+  }
+
+  .roster-tab.active {
+    background: #1565c0;
+    color: white;
+    font-weight: bold;
+  }
+
+  .roster-wrap {
+    overflow-x: auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .12);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  th,
+  td {
+    border: 1px solid #cfd8dc;
+    padding: 6px;
+    text-align: center;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .staff-name {
+    text-align: left;
+    min-width: 150px;
+    font-weight: bold;
+    background: #f5f5f5;
+  }
+
+  .weekday-row th {
+    background: #eceff1;
+    font-weight: normal;
+  }
+
+  .date-row th {
+    background: #eceff1;
+    font-weight: bold;
+  }
+
+  .weekday-cell {
+    background: white;
+  }
+
+  .od {
+    background: #2e7d32;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .of {
+    background: #eeeeee;
+    color: #555;
+    cursor: pointer;
+  }
+
+  .special-cell {
+    background: #d6d6d6 !important;
+  }
+
+  .special-cell.od {
+    background: #2e7d32 !important;
+    color: white;
+  }
+
+  .special-cell.of {
+    background: #d6d6d6 !important;
+    color: #555;
+  }
+
+  .empty {
+    padding: 30px;
+    text-align: center;
+    color: #666;
+  }
+
+  .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  #logoPreview {
+    margin-top: 10px;
+  }
+
+  #logoPreview img {
+    max-height: 80px;
+    max-width: 220px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: white;
+    padding: 5px;
+  }
+
+  .print-header {
+    display: none;
+  }
+
+  @media print {
+    header,
+    .main-tabs,
+    .roster-tabs,
+    .card,
+    .actions,
+    .no-print {
+      display: none !important;
+    }
+
+    body {
+      background: white;
+    }
+
+    main {
+      padding: 0;
+    }
+
+    .print-header {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .print-top-row {
+      text-align: center;
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .print-bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .print-company {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .print-company img {
+      max-height: 45px;
+      max-width: 140px;
+    }
+
+    .print-company-name {
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .print-section {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .print-prepared-by {
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .roster-wrap {
+      box-shadow: none;
+      border-radius: 0;
+    }
+
+    th,
+    td {
+      font-size: 9px;
+      padding: 3px;
+    }
+
+    .staff-name {
+      min-width: 110px;
+    }
+
+    @page {
+      size: A4 landscape;
+      margin: 8mm;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="company-header">
+    <img
+      id="headerLogo"
+      src=""
+      alt="Company logo"
+      style="display:none"
+    >
+    <h1 id="headerCompanyName">Staff Duty Roster</h1>
+  </div>
+
+  <div class="controls">
+    <select id="month"></select>
+    <select id="year"></select>
+    <button class="secondary" onclick="window.print()">Print</button>
+    <button class="secondary" onclick="exportExcel()">Export</button>
+  </div>
+</header>
+
+<main>
+  <div class="print-header">
+    <div class="print-top-row" id="printMonthTitle"></div>
+
+    <div class="print-bottom-row">
+      <div class="print-company">
+        <img id="printLogo" src="" alt="" style="display:none">
+        <div class="print-company-name" id="printCompanyName"></div>
+      </div>
+
+      <div class="print-section" id="printSection"></div>
+
+      <div class="print-prepared-by" id="printPreparedBy"></div>
+    </div>
+  </div>
+
+  <div class="main-tabs no-print">
+    <button
+      class="main-tab active"
+      id="rosterMainTab"
+      onclick="showScreen('roster')"
+    >
+      Roster
+    </button>
+
+    <button
+      class="main-tab"
+      id="settingsMainTab"
+      onclick="showScreen('settings')"
+    >
+      Settings
+    </button>
+  </div>
+
+  <div id="rosterScreen" class="screen active">
+    <div class="roster-tabs no-print">
+      <button
+        class="roster-tab active"
+        id="dayTab"
+        onclick="setSection('DAY')"
+      >
+        Day
+      </button>
+
+      <button
+        class="roster-tab"
+        id="nightTab"
+        onclick="setSection('NIGHT')"
+      >
+        Night
+      </button>
+    </div>
+
+    <div class="roster-wrap">
+      <div id="roster"></div>
+    </div>
+
+    <div class="actions no-print">
+      <button class="secondary" onclick="undo()">
+        Undo
+      </button>
+
+      <button class="secondary" onclick="redo()">
+        Redo
+      </button>
+
+      <button class="secondary" onclick="clearMonth()">
+        Clear this month
+      </button>
+    </div>
+  </div>
+
+  <div id="settingsScreen" class="screen">
+    <div class="card">
+      <h3>Company settings</h3>
+
+      <div class="form-row">
+        <input
+          id="companyName"
+          placeholder="Company name"
+          oninput="saveCompany()"
+        >
+
+        <input
+          id="preparedByName"
+          placeholder="Off duties by: name"
+          oninput="savePreparedBy()"
+        >
+      </div>
+
+      <div class="form-row">
+        <input
+          type="file"
+          id="companyLogo"
+          accept="image/*"
+          onchange="saveLogo(this)"
+        >
+
+        <button class="secondary" onclick="removeLogo()">
+          Remove logo
+        </button>
+      </div>
+
+      <div id="logoPreview"></div>
+    </div>
+
+    <div class="card">
+      <h3>Add staff</h3>
+
+      <div class="form-row">
+        <input
+          id="staffName"
+          placeholder="Staff name"
+        >
+
+        <select id="staffSection">
+          <option value="DAY">Day</option>
+          <option value="NIGHT">Night</option>
+        </select>
+
+        <button onclick="addStaff()">Save staff</button>
+      </div>
+
+      <h4>Day staff</h4>
+      <div class="staff-list" id="dayStaffList"></div>
+
+      <h4>Night staff</h4>
+      <div class="staff-list" id="nightStaffList"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December"
+];
+
+const FIXED_HOLIDAYS = [
+  "01-01",
+  "03-21",
+  "04-27",
+  "05-01",
+  "06-16",
+  "08-09",
+  "09-24",
+  "12-16",
+  "12-25",
+  "12-26"
+];
+
+let state = {
+  companyName: "",
+  companyLogo: "",
+  preparedByName: "",
+  staff: [],
+  roster: {},
+  section: "DAY"
+};
+
+let undoHistory = [];
+let redoHistory = [];
+
+const monthSelect = document.getElementById("month");
+const yearSelect = document.getElementById("year");
+
+MONTHS.forEach(function(monthName, index) {
+  const option = document.createElement("option");
+  option.value = index;
+  option.textContent = monthName;
+  monthSelect.appendChild(option);
+});
+
+const currentYear = new Date().getFullYear();
+
+for (let year = currentYear - 2; year <= 2070; year++) {
+  const option = document.createElement("option");
+  option.value = year;
+  option.textContent = year;
+  yearSelect.appendChild(option);
+}
+
+monthSelect.value = new Date().getMonth();
+yearSelect.value = currentYear;
+
+function loadData() {
+  const saved = localStorage.getItem("staffDutyRoster");
+
+  if (saved) {
+    state = JSON.parse(saved);
+  }
+
+  state.companyName = state.companyName || "";
+  state.companyLogo = state.companyLogo || "";
+  state.preparedByName = state.preparedByName || "";
+  state.staff = state.staff || [];
+  state.roster = state.roster || {};
+  state.section = state.section || "DAY";
+}
+
+function saveData() {
+  localStorage.setItem("staffDutyRoster", JSON.stringify(state));
+}
+
+function saveHistory() {
+  undoHistory.push(JSON.stringify(state));
+  redoHistory = [];
+
+  if (undoHistory.length > 50) {
+    undoHistory.shift();
+  }
+}
+
+function undo() {
+  if (undoHistory.length === 0) {
+    alert("There is nothing to undo.");
+    return;
+  }
+
+  redoHistory.push(JSON.stringify(state));
+
+  const previousState = undoHistory.pop();
+
+  state = JSON.parse(previousState);
+
+  state.companyName = state.companyName || "";
+  state.companyLogo = state.companyLogo || "";
+  state.preparedByName = state.preparedByName || "";
+  state.staff = state.staff || [];
+  state.roster = state.roster || {};
+  state.section = state.section || "DAY";
+
+  saveData();
+  updateCompanyHeader();
+  showLogoPreview();
+  renderStaffLists();
+  render();
+}
+
+function redo() {
+  if (redoHistory.length === 0) {
+    alert("There is nothing to redo.");
+    return;
+  }
+
+  undoHistory.push(JSON.stringify(state));
+
+  const nextState = redoHistory.pop();
+
+  state = JSON.parse(nextState);
+
+  state.companyName = state.companyName || "";
+  state.companyLogo = state.companyLogo || "";
+  state.preparedByName = state.preparedByName || "";
+  state.staff = state.staff || [];
+  state.roster = state.roster || {};
+  state.section = state.section || "DAY";
+
+  saveData();
+  updateCompanyHeader();
+  showLogoPreview();
+  renderStaffLists();
+  render();
+}
+
+function showScreen(screenName) {
+  const rosterScreen = document.getElementById("rosterScreen");
+  const settingsScreen = document.getElementById("settingsScreen");
+
+  const rosterTab = document.getElementById("rosterMainTab");
+  const settingsTab = document.getElementById("settingsMainTab");
+
+  if (screenName === "roster") {
+    rosterScreen.classList.add("active");
+    settingsScreen.classList.remove("active");
+
+    rosterTab.classList.add("active");
+    settingsTab.classList.remove("active");
+  } else {
+    settingsScreen.classList.add("active");
+    rosterScreen.classList.remove("active");
+
+    settingsTab.classList.add("active");
+    rosterTab.classList.remove("active");
+  }
+
+  renderStaffLists();
+}
+
+function saveCompany() {
+  saveHistory();
+
+  state.companyName = document
+    .getElementById("companyName")
+    .value.trim();
+
+  saveData();
+  updateCompanyHeader();
+  updatePrintHeader();
+}
+
+function savePreparedBy() {
+  saveHistory();
+
+  state.preparedByName = document
+    .getElementById("preparedByName")
+    .value.trim();
+
+  saveData();
+  updatePrintHeader();
+}
+
+function saveLogo(input) {
+  const file = input.files[0];
+
+  if (!file) {
+    return;
+  }
+
+  saveHistory();
+
+  const reader = new FileReader();
+
+  reader.onload = function(event) {
+    state.companyLogo = event.target.result;
+    saveData();
+    updateCompanyHeader();
+    showLogoPreview();
+    updatePrintHeader();
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+  saveHistory();
+
+  state.companyLogo = "";
+  saveData();
+  updateCompanyHeader();
+  showLogoPreview();
+  updatePrintHeader();
+  document.getElementById("companyLogo").value = "";
+}
+
+function updateCompanyHeader() {
+  const name = state.companyName || "Staff Duty Roster";
+  const logo = state.companyLogo;
+
+  document.getElementById("headerCompanyName").textContent = name;
+  document.getElementById("companyName").value = state.companyName || "";
+
+  const logoElement = document.getElementById("headerLogo");
+
+  if (logo) {
+    logoElement.src = logo;
+    logoElement.style.display = "block";
+  } else {
+    logoElement.src = "";
+    logoElement.style.display = "none";
+  }
+}
+
+function showLogoPreview() {
+  const preview = document.getElementById("logoPreview");
+  const logo = state.companyLogo;
+
+  if (logo) {
+    preview.innerHTML =
+      '<img src="' + logo + '" alt="Company logo">';
+  } else {
+    preview.innerHTML = "";
+  }
+}
+
+function updatePrintHeader() {
+  const year = parseInt(yearSelect.value);
+  const month = parseInt(monthSelect.value);
+
+  document.getElementById("printMonthTitle").textContent =
+    MONTHS[month] + " " + year + " — Off Duties";
+
+  document.getElementById("printCompanyName").textContent =
+    state.companyName || "";
+
+  document.getElementById("printSection").textContent =
+    state.section === "DAY" ? "DAY" : "NIGHT";
+
+  document.getElementById("printPreparedBy").textContent =
+    "Off duties by " + (state.preparedByName || "");
+
+  const printLogo = document.getElementById("printLogo");
+
+  if (state.companyLogo) {
+    printLogo.src = state.companyLogo;
+    printLogo.style.display = "block";
+  } else {
+    printLogo.src = "";
+    printLogo.style.display = "none";
+  }
+}
+
+function addStaff() {
+  const name = document.getElementById("staffName").value.trim();
+  const section = document.getElementById("staffSection").value;
+
+  if (!name) {
+    alert("Please enter a staff name.");
+    return;
+  }
+
+  saveHistory();
+
+  state.staff.push({
+    id: Date.now(),
+    name: name,
+    section: section
+  });
+
+  document.getElementById("staffName").value = "";
+  saveData();
+  renderStaffLists();
+  render();
+}
+
+function removeStaff(id) {
+  saveHistory();
+
+  state.staff = state.staff.filter(function(staffMember) {
+    return staffMember.id !== id;
+  });
+
+  saveData();
+  renderStaffLists();
+  render();
+}
+
+function renderStaffLists() {
+  const dayList = document.getElementById("dayStaffList");
+  const nightList = document.getElementById("nightStaffList");
+
+  dayList.innerHTML = "";
+  nightList.innerHTML = "";
+
+  state.staff.forEach(function(person) {
+    const chip = document.createElement("div");
+    chip.className = "staff-chip";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = person.name;
+
+    const removeButton = document.createElement("button");
+    removeButton.textContent = "X";
+    removeButton.onclick = function() {
+      removeStaff(person.id);
+    };
+
+    chip.appendChild(nameSpan);
+    chip.appendChild(removeButton);
+
+    if (person.section === "DAY") {
+      dayList.appendChild(chip);
+    } else {
+      nightList.appendChild(chip);
+    }
+  });
+}
+
+function setSection(section) {
+  state.section = section;
+
+  document.getElementById("dayTab").classList.toggle(
+    "active",
+    section === "DAY"
+  );
+
+  document.getElementById("nightTab").classList.toggle(
+    "active",
+    section === "NIGHT"
+  );
+
+  render();
+}
+
+function daysInMonth(year, month) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function getEaster(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+
+  return new Date(year, month - 1, day);
+}
+
+function isPublicHoliday(date) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  const key =
+    String(month + 1).padStart(2, "0") +
+    "-" +
+    String(day).padStart(2, "0");
+
+  if (FIXED_HOLIDAYS.includes(key)) {
+    return true;
+  }
+
+  const easter = getEaster(year);
+
+  const goodFriday = new Date(easter);
+  goodFriday.setDate(easter.getDate() - 2);
+
+  const familyDay = new Date(easter);
+  familyDay.setDate(easter.getDate() + 1);
+
+  if (
+    date.getTime() === goodFriday.getTime() ||
+    date.getTime() === familyDay.getTime()
+  ) {
+    return true;
+  }
+
+  if (date.getDay() === 0) {
+    const nextDay = new Date(date);
+    nextDay.setDate(date.getDate() + 1);
+
+    const nextKey =
+      String(nextDay.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(nextDay.getDate()).padStart(2, "0");
+
+    if (FIXED_HOLIDAYS.includes(nextKey)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isSpecialDay(date) {
+  const day = date.getDay();
+
+  return day === 0 || day === 6 || isPublicHoliday(date);
+}
+
+function toggleOD(staffId, dateKey) {
+  saveHistory();
+
+  const key = staffId + "|" + dateKey;
+
+  if (state.roster[key] === "OD") {
+    delete state.roster[key];
+  } else {
+    state.roster[key] = "OD";
+  }
+
+  saveData();
+  render();
+}
+
+function clearMonth() {
+  if (!confirm("Clear all OD marks for this month?")) {
+    return;
+  }
+
+  saveHistory();
+
+  const year = parseInt(yearSelect.value);
+  const month = parseInt(monthSelect.value);
+  const total = daysInMonth(year, month);
+
+  for (let day = 1; day <= total; day++) {
+    const dateKey =
+      year +
+      "-" +
+      String(month + 1).padStart(2, "0") +
+      "-" +
+      String(day).padStart(2, "0");
+
+    state.staff
+      .filter(function(staffMember) {
+        return staffMember.section === state.section;
+      })
+      .forEach(function(staffMember) {
+        delete state.roster[staffMember.id + "|" + dateKey];
+      });
+  }
+
+  saveData();
+  render();
+}
+
+async function exportExcel() {
+  const year = parseInt(yearSelect.value);
+  const month = parseInt(monthSelect.value);
+  const total = daysInMonth(year, month);
+
+  const staff = state.staff.filter(function(staffMember) {
+    return staffMember.section === state.section;
+  });
+
+  if (staff.length === 0) {
+    alert("Add staff before exporting.");
+    return;
+  }
+
+  if (typeof ExcelJS === "undefined") {
+    alert(
+      "Excel export needs an internet connection the first time. " +
+      "Please connect to Wi-Fi or mobile data and try again."
+    );
+    return;
+  }
+
+  const workbook = new ExcelJS.Workbook();
+
+  const worksheet = workbook.addWorksheet("Off Duties");
+
+  worksheet.columns = [
+    { width: 22 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 },
+    { width: 7 }
+  ];
+
+  const titleRow = worksheet.getRow(1);
+
+  titleRow.getCell(1).value =
+    state.companyName || "Staff Duty Roster";
+
+  titleRow.getCell(1).font = {
+    bold: true,
+    size: 14
+  };
+
+  const sectionCell = titleRow.getCell(16);
+
+  sectionCell.value = state.section;
+  sectionCell.font = {
+    bold: true,
+    size: 14
+  };
+  sectionCell.alignment = {
+    horizontal: "center"
+  };
+
+  const preparedCell = titleRow.getCell(28);
+
+  preparedCell.value =
+    "Off duties by " + (state.preparedByName || "");
+
+  preparedCell.font = {
+    bold: true
+  };
+
+  worksheet.getRow(2).height = 8;
+
+  const dateHeaderRow = worksheet.getRow(3);
+
+  dateHeaderRow.getCell(1).value = "DATE";
+  dateHeaderRow.getCell(1).font = {
+    bold: true
+  };
+  dateHeaderRow.getCell(1).alignment = {
+    horizontal: "center"
+  };
+
+  for (let day = 1; day <= total; day++) {
+    const cell = dateHeaderRow.getCell(day + 1);
+
+    cell.value = day;
+    cell.font = {
+      bold: true
+    };
+    cell.alignment = {
+      horizontal: "center"
+    };
+  }
+
+  dateHeaderRow.height = 20;
+
+  const weekdayRow = worksheet.getRow(4);
+
+  weekdayRow.getCell(1).value = "DAY";
+  weekdayRow.getCell(1).font = {
+    bold: true
+  };
+
+  for (let day = 1; day <= total; day++) {
+    const date = new Date(year, month, day);
+    const dayName = ["S", "M", "T", "W", "T", "F", "S"][date.getDay()];
+    const special = isSpecialDay(date);
+
+    const cell = weekdayRow.getCell(day + 1);
+
+    cell.value = dayName;
+    cell.alignment = {
+      horizontal: "center"
+    };
+
+    if (special) {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: {
+          argb: "FFD6D6D6"
+        }
+      };
+    }
+  }
+
+  staff.forEach(function(person, staffIndex) {
+    const rowNumber = staffIndex + 5;
+    const row = worksheet.getRow(rowNumber);
+
+    row.getCell(1).value = person.name;
+    row.getCell(1).font = {
+      bold: true
+    };
+
+    for (let day = 1; day <= total; day++) {
+      const date = new Date(year, month, day);
+
+      const dateKey =
+        year +
+        "-" +
+        String(month + 1).padStart(2, "0") +
+        "-" +
+        String(day).padStart(2, "0");
+
+      const status =
+        state.roster[person.id + "|" + dateKey] === "OD"
+          ? "OD"
+          : "OFF";
+
+      const special = isSpecialDay(date);
+      const cell = row.getCell(day + 1);
+
+      cell.value = status;
+      cell.alignment = {
+        horizontal: "center"
+      };
+
+      if (status === "OD") {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: {
+            argb: "FF2E7D32"
+          }
+        };
+
+        cell.font = {
+          color: {
+            argb: "FFFFFFFF"
+          },
+          bold: true
+        };
+      } else if (special) {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: {
+            argb: "FFD6D6D6"
+          }
+        };
+
+        cell.font = {
+          color: {
+            argb: "FF555555"
+          }
+        };
+      } else {
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: {
+            argb: "FFFFFFFF"
+          }
+        };
+
+        cell.font = {
+          color: {
+            argb: "FF555555"
+          }
+        };
+      }
+    }
+  });
+
+  worksheet.views = [
+    {
+      state: "frozen",
+      ySplit: 4
+    }
+  ];
+
+  const companyName =
+    state.companyName || "Staff-Duty-Roster";
+
+  const safeCompanyName = companyName
+    .replace(/[^a-z0-9]/gi, "-")
+    .replace(/-+/g, "-");
+
+  const fileName =
+    safeCompanyName +
+    "-" +
+    state.section +
+    "-" +
+    MONTHS[month] +
+    "-" +
+    year +
+    ".xlsx";
+
+  const buffer = await workbook.xlsx.writeBuffer();
+
+  const blob = new Blob([buffer], {
+    type:
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+
+  link.href = url;
+  link.download = fileName;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  setTimeout(function() {
+    URL.revokeObjectURL(url);
+  }, 1000);
+}
+
+function render() {
+  const year = parseInt(yearSelect.value);
+  const month = parseInt(monthSelect.value);
+  const total = daysInMonth(year, month);
+
+  const staff = state.staff.filter(function(staffMember) {
+    return staffMember.section === state.section;
+  });
+
+  updatePrintHeader();
+
+  let html = "<table>";
+
+  html += '<tr class="date-row">';
+  html += '<th class="staff-name">Staff</th>';
+
+  for (let day = 1; day <= total; day++) {
+    html += "<th>" + day + "</th>";
+  }
+
+  html += "</tr>";
+
+  html += '<tr class="weekday-row">';
+  html += '<th class="staff-name">Day</th>';
+
+  for (let day = 1; day <= total; day++) {
+    const date = new Date(year, month, day);
+    const dayName = ["S", "M", "T", "W", "T", "F", "S"][date.getDay()];
+    const special = isSpecialDay(date);
+
+    html +=
+      '<th class="' +
+      (special ? "special-cell" : "weekday-cell") +
+      '">' +
+      dayName +
+      "</th>";
+  }
+
+  html += "</tr>";
+
+  if (staff.length === 0) {
+    html +=
+      '<tr><td class="empty" colspan="' +
+      (total + 1) +
+      '">No staff added for ' +
+      state.section.toLowerCase() +
+      " shift.</td></tr>";
+  }
+
+  staff.forEach(function(person) {
+    html += '<tr><td class="staff-name">' + person.name + "</td>";
+
+    for (let day = 1; day <= total; day++) {
+      const date = new Date(year, month, day);
+
+      const dateKey =
+        year +
+        "-" +
+        String(month + 1).padStart(2, "0") +
+        "-" +
+        String(day).padStart(2, "0");
+
+      const status =
+        state.roster[person.id + "|" + dateKey] === "OD"
+          ? "OD"
+          : "OFF";
+
+      const special = isSpecialDay(date);
+
+      html +=
+        '<td class="' +
+        (status === "OD" ? "od" : "of") +
+        " " +
+        (special ? "special-cell" : "") +
+        '" onclick="toggleOD(' +
+        person.id +
+        ", '" +
+        dateKey +
+        '\')">' +
+        status +
+        "</td>";
+    }
+
+    html += "</tr>";
+  });
+
+  html += "</table>";
+
+  document.getElementById("roster").innerHTML = html;
+}
+
+monthSelect.addEventListener("change", function() {
+  render();
+});
+
+yearSelect.addEventListener("change", function() {
+  render();
+});
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("./service-worker.js")
+    .then(function() {
+      console.log("Service worker registered.");
+    })
+    .catch(function(error) {
+      console.log("Service worker registration failed:", error);
+    });
+}
+loadData();
+updateCompanyHeader();
+showLogoPreview();
+renderStaffLists();
+render();
+</script>
+
+</body>
+</html>
