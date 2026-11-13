@@ -6,7 +6,8 @@
 <title>Staff Duty Roster</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1565c0">
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   * { box-sizing: border-box; }
@@ -41,6 +42,7 @@
   .weekday-row th { background: #eceff1; font-weight: normal; }
   .date-row th { background: #eceff1; font-weight: bold; }
   .weekday-cell { background: white; }
+  .weekend-letter { color: #ff5722 !important; font-weight: bold; }
   .od { background: #2e7d32; color: white; font-weight: bold; cursor: pointer; }
   .of { background: #eeeeee; color: #555; cursor: pointer; }
   .special-cell { background: #d6d6d6 !important; }
@@ -97,7 +99,7 @@
     <select id="month"></select>
     <select id="year"></select>
     <button class="secondary" onclick="window.print()">Print</button>
-    <button class="secondary" onclick="exportExcel()">Export</button>
+    <button class="secondary" onclick="exportPDF()">Export</button>
   </div>
 </header>
 
@@ -855,206 +857,65 @@ async function loadFromGoogleSheets() {
   }
 }
 
-async function exportExcel() {
-  const year = parseInt(yearSelect.value);
-  const month = parseInt(monthSelect.value);
-  const total = daysInMonth(year, month);
+async function exportPDF() {
+  const element = document.getElementById("roster-wrap");
 
-  const staff = state.staff.filter(function(staffMember) {
-    return staffMember.section === state.section;
-  });
-
-  if (staff.length === 0) {
-    alert("Add staff before exporting.");
+  if (!element) {
+    alert("Roster not found.");
     return;
   }
 
-  if (typeof ExcelJS === "undefined") {
-    alert("Excel export needs an internet connection the first time. Please connect to Wi-Fi or mobile data and try again.");
+  if (typeof html2canvas === "undefined" || typeof jspdf === "undefined") {
+    alert("PDF export needs an internet connection. Please connect to Wi-Fi or mobile data and try again.");
     return;
   }
 
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Off Duties");
+  try {
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff"
+    });
 
-  worksheet.columns = [
-    { width: 22 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 },
-    { width: 7 }
-  ];
+    const imgData = canvas.toDataURL("image/png");
 
-  const titleRow = worksheet.getRow(1);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({
+      orientation: "landscape",
+      unit: "mm",
+      format: "a4"
+    });
 
-  titleRow.getCell(1).value = state.companyName || "Staff Duty Roster";
-  titleRow.getCell(1).font = { bold: true, size: 14 };
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
-  const sectionCell = titleRow.getCell(16);
-  sectionCell.value = state.section;
-  sectionCell.font = { bold: true, size: 14 };
-  sectionCell.alignment = { horizontal: "center" };
+    const imgWidth = pageWidth - 10;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-  const preparedCell = titleRow.getCell(28);
-  preparedCell.value = "Off duties by " + (state.preparedByName || "");
-  preparedCell.font = { bold: true };
+    let heightLeft = imgHeight;
+    let position = 5;
 
-  worksheet.getRow(2).height = 8;
+    pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
+    heightLeft -= (pageHeight - 10);
 
-  const dateHeaderRow = worksheet.getRow(3);
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight + 5;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
+      heightLeft -= (pageHeight - 10);
+    }
 
-  dateHeaderRow.getCell(1).value = "DATE";
-  dateHeaderRow.getCell(1).font = { bold: true };
-  dateHeaderRow.getCell(1).alignment = { horizontal: "center" };
+    const companyName = state.companyName || "Staff-Duty-Roster";
+    const safeCompanyName = companyName
+      .replace(/[^a-z0-9]/gi, "-")
+      .replace(/-+/g, "-");
 
-  for (let day = 1; day <= total; day++) {
-    const cell = dateHeaderRow.getCell(day + 1);
-    cell.value = day;
-    cell.font = { bold: true };
-    cell.alignment = { horizontal: "center" };
+    const fileName = safeCompanyName + "-" + state.section + "-" + MONTHS[monthSelect.value] + "-" + yearSelect.value + ".pdf";
+
+    pdf.save(fileName);
+  } catch (error) {
+    alert("Could not create PDF: " + error.message);
   }
-
-  dateHeaderRow.height = 20;
-
-  const weekdayRow = worksheet.getRow(4);
-
-  weekdayRow.getCell(1).value = "DAY";
-  weekdayRow.getCell(1).font = { bold: true };
-
-  for (let day = 1; day <= total; day++) {
-    const date = new Date(year, month, day);
-    const dayName = ["S", "M", "T", "W", "T", "F", "S"][date.getDay()];
-    const special = isSpecialDay(date);
-
-    const cell = weekdayRow.getCell(day + 1);
-    cell.value = dayName;
-    cell.alignment = { horizontal: "center" };
-
-    if (special) {
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFD6D6D6" }
-      };
-    }
-  }
-
-  staff.forEach(function(person, staffIndex) {
-    const rowNumber = staffIndex + 5;
-    const row = worksheet.getRow(rowNumber);
-
-    row.getCell(1).value = person.name;
-    row.getCell(1).font = { bold: true };
-
-    for (let day = 1; day <= total; day++) {
-      const date = new Date(year, month, day);
-
-      const dateKey = year + "-" + String(month + 1).padStart(2, "0") + "-" + String(day).padStart(2, "0");
-
-      const status = state.roster[person.id + "|" + dateKey] === "OD" ? "OD" : "OFF";
-
-      const special = isSpecialDay(date);
-      const cell = row.getCell(day + 1);
-
-      cell.value = status;
-      cell.alignment = { horizontal: "center" };
-
-      if (status === "OD") {
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FF2E7D32" }
-        };
-
-        cell.font = {
-          color: { argb: "FFFFFFFF" },
-          bold: true
-        };
-      } else if (special) {
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FFD6D6D6" }
-        };
-
-        cell.font = {
-          color: { argb: "FF555555" }
-        };
-      } else {
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FFFFFFFF" }
-        };
-
-        cell.font = {
-          color: { argb: "FF555555" }
-        };
-      }
-    }
-  });
-
-  worksheet.views = [
-    {
-      state: "frozen",
-      ySplit: 4
-    }
-  ];
-
-  const companyName = state.companyName || "Staff-Duty-Roster";
-
-  const safeCompanyName = companyName
-    .replace(/[^a-z0-9]/gi, "-")
-    .replace(/-+/g, "-");
-
-  const fileName = safeCompanyName + "-" + state.section + "-" + MONTHS[month] + "-" + year + ".xlsx";
-
-  const buffer = await workbook.xlsx.writeBuffer();
-
-  const blob = new Blob([buffer], {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  });
-
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-
-  link.href = url;
-  link.download = fileName;
-
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  setTimeout(function() {
-    URL.revokeObjectURL(url);
-  }, 1000);
 }
 
 function render() {
@@ -1087,7 +948,7 @@ function render() {
     const dayName = ["S", "M", "T", "W", "T", "F", "S"][date.getDay()];
     const special = isSpecialDay(date);
 
-    html += '<th class="' + (special ? "special-cell" : "weekday-cell") + '">' + dayName + "</th>";
+    html += '<th class="' + (special ? "special-cell weekend-letter" : "weekday-cell") + '">' + dayName + "</th>";
   }
 
   html += "</tr>";
