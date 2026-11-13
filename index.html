@@ -888,21 +888,72 @@ async function exportPDF() {
 
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 8;
+    const contentWidth = pageWidth - (margin * 2);
 
-    const imgWidth = pageWidth - 10;
+    const year = parseInt(yearSelect.value);
+    const month = parseInt(monthSelect.value);
+    const monthTitle = MONTHS[month] + " " + year + " — Off Duties";
+
+    let y = margin;
+
+    if (state.companyLogo) {
+      try {
+        const logoImage = new Image();
+        logoImage.src = state.companyLogo;
+
+        await new Promise(function(resolve, reject) {
+          logoImage.onload = resolve;
+          logoImage.onerror = reject;
+        });
+
+        const logoHeight = 12;
+        const logoWidth = (logoImage.width * logoHeight) / logoImage.height;
+
+        pdf.addImage(state.companyLogo, margin, y, logoWidth, logoHeight);
+
+        pdf.setFontSize(14);
+        pdf.setFont(undefined, "bold");
+        pdf.text(state.companyName || "Staff Duty Roster", margin + logoWidth + 3, y + 8);
+      } catch (error) {
+        pdf.setFontSize(14);
+        pdf.setFont(undefined, "bold");
+        pdf.text(state.companyName || "Staff Duty Roster", margin, y + 6);
+      }
+    } else {
+      pdf.setFontSize(14);
+      pdf.setFont(undefined, "bold");
+      pdf.text(state.companyName || "Staff Duty Roster", margin, y + 6);
+    }
+
+    pdf.setFontSize(14);
+    pdf.setFont(undefined, "bold");
+    pdf.text(monthTitle, pageWidth / 2, y + 8, { align: "center" });
+
+    y = y + 16;
+
+    pdf.setFontSize(11);
+    pdf.setFont(undefined, "bold");
+    pdf.text(state.section, pageWidth / 2, y, { align: "center" });
+    pdf.text("Off duties by " + (state.preparedByName || ""), pageWidth - margin, y, { align: "right" });
+
+    y = y + 6;
+
+    const imgWidth = contentWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
     let heightLeft = imgHeight;
-    let position = 5;
+    let position = y;
 
-    pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
-    heightLeft -= (pageHeight - 10);
+    pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+
+    heightLeft -= (pageHeight - y - margin);
 
     while (heightLeft > 0) {
-      position = heightLeft - imgHeight + 5;
+      position = heightLeft - imgHeight + margin;
       pdf.addPage();
-      pdf.addImage(imgData, "PNG", 5, position, imgWidth, imgHeight);
-      heightLeft -= (pageHeight - 10);
+      pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+      heightLeft -= (pageHeight - (margin * 2));
     }
 
     const companyName = state.companyName || "Staff-Duty-Roster";
@@ -910,7 +961,7 @@ async function exportPDF() {
       .replace(/[^a-z0-9]/gi, "-")
       .replace(/-+/g, "-");
 
-    const fileName = safeCompanyName + "-" + state.section + "-" + MONTHS[monthSelect.value] + "-" + yearSelect.value + ".pdf";
+    const fileName = safeCompanyName + "-" + state.section + "-" + MONTHS[month] + "-" + year + ".pdf";
 
     pdf.save(fileName);
   } catch (error) {
