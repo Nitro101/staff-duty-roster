@@ -19,14 +19,13 @@
   input, select { width:100%; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:14px; margin-bottom:10px; }
   button.primary { width:100%; padding:14px; background:#1a73e8; color:#fff; border:none; border-radius:10px; font-size:15px; cursor:pointer; margin-bottom:10px; }
   button.secondary { width:100%; padding:12px; background:#e8f0fe; color:#1a73e8; border:none; border-radius:10px; font-size:14px; cursor:pointer; margin-bottom:10px; }
-  button.danger { width:100%; padding:12px; background:#fce8e6; color:#c5221f; border:none; border-radius:10px; font-size:14px; cursor:pointer; }
   .staff-item { display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee; }
   .staff-item:last-child { border-bottom:none; }
   .staff-item button { background:none; border:none; color:#c5221f; font-size:18px; cursor:pointer; }
   .day { margin-bottom:12px; }
   .day h3 { font-size:14px; margin-bottom:6px; }
-  .day .btns { display:flex; gap:6px; }
-  .day .btns button { flex:1; padding:8px; border:1px solid #ccc; border-radius:8px; background:#fff; font-size:12px; cursor:pointer; }
+  .day .btns { display:flex; gap:6px; flex-wrap:wrap; }
+  .day .btns button { flex:1 1 30%; padding:8px; border:1px solid #ccc; border-radius:8px; background:#fff; font-size:12px; cursor:pointer; }
   .day .btns button.od { background:#fce8e6; color:#c5221f; border-color:#c5221f; }
   .day .btns button.off { background:#e6f4ea; color:#137333; border-color:#137333; }
   .status { font-size:13px; padding:10px; border-radius:8px; margin-bottom:10px; }
@@ -49,7 +48,6 @@
     <button id="tab-settings" onclick="showTab('settings')">Settings</button>
   </div>
 
-  <!-- ROSTER -->
   <div id="view-roster">
     <div class="card">
       <h2>This Week</h2>
@@ -58,7 +56,6 @@
     </div>
   </div>
 
-  <!-- STAFF -->
   <div id="view-staff" class="hidden">
     <div class="card">
       <h2>Staff Members</h2>
@@ -68,7 +65,6 @@
     </div>
   </div>
 
-  <!-- SETTINGS -->
   <div id="view-settings" class="hidden">
     <div class="card">
       <h2>Google Sheets</h2>
@@ -82,7 +78,6 @@
   </div>
 </div>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 const GOOGLE_CLIENT_ID = "406015748349-j23ai39p6cij0t42fgiet11os4nnsoco.apps.googleusercontent.com";
 const SCOPE = "https://www.googleapis.com/auth/spreadsheets";
@@ -176,6 +171,10 @@ function setStatusMsg(text, cls) {
 }
 
 function connectGoogle() {
+  if (typeof google === "undefined" || !google.accounts) {
+    setStatusMsg("Google is still loading. Wait 5 seconds and try again.", "warn");
+    return;
+  }
   if (!tokenClient) {
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
@@ -184,7 +183,12 @@ function connectGoogle() {
         if (resp.access_token) {
           accessToken = resp.access_token;
           setStatusMsg("Connected to Google", "ok");
+        } else {
+          setStatusMsg("Google did not return access", "err");
         }
+      },
+      error_callback: (err) => {
+        setStatusMsg("Google error: " + (err.type || "unknown"), "err");
       }
     });
   }
@@ -245,8 +249,11 @@ async function syncNow() {
   } catch (e) { setStatusMsg(e.message, "err"); }
 }
 
-document.getElementById("week-start").value = getWeekStart().toISOString().slice(0,10);
-renderRoster();
+window.addEventListener("load", () => {
+  document.getElementById("week-start").value = getWeekStart().toISOString().slice(0,10);
+  renderRoster();
+});
 </script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>
