@@ -858,7 +858,7 @@ async function loadFromGoogleSheets() {
 }
 
 async function exportPDF() {
-  const element = document.getElementById("roster-wrap");
+  const element = document.querySelector(".roster-wrap");
 
   if (!element) {
     alert("Roster not found.");
