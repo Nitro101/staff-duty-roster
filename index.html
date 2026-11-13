@@ -143,25 +143,6 @@
 
   <div id="settingsScreen" class="screen">
     <div class="card">
-      <h3>Google Sheets</h3>
-
-      <div id="googleStatus" class="google-status">Not connected</div>
-
-      <div class="form-row">
-        <button onclick="connectGoogle()">Connect Google account</button>
-        <button onclick="createGoogleSheet()">Create Google Sheet</button>
-        <button onclick="syncNow()">Sync now</button>
-        <button class="secondary" onclick="disconnectGoogle()">Disconnect</button>
-      </div>
-
-      <div class="form-row">
-        <input id="spreadsheetId" placeholder="Paste Google Sheet ID" oninput="saveSpreadsheetId()">
-      </div>
-
-      <p class="small-text">Google Sheets is optional. Use the same Google Sheet on every phone and PC to keep the roster the same.</p>
-    </div>
-
-    <div class="card">
       <h3>Company settings</h3>
 
       <div class="form-row">
@@ -194,6 +175,25 @@
 
       <h4>Night staff</h4>
       <div class="staff-list" id="nightStaffList"></div>
+    </div>
+
+    <div class="card">
+      <h3>Google Sheets</h3>
+
+      <div id="googleStatus" class="google-status">Not connected</div>
+
+      <div class="form-row">
+        <button onclick="connectGoogle()">Connect Google account</button>
+        <button onclick="createGoogleSheet()">Create Google Sheet</button>
+        <button onclick="syncNow()">Sync now</button>
+        <button class="secondary" onclick="disconnectGoogle()">Disconnect</button>
+      </div>
+
+      <div class="form-row">
+        <input id="spreadsheetId" placeholder="Paste Google Sheet ID" oninput="saveSpreadsheetId()">
+      </div>
+
+      <p class="small-text">Google Sheets is optional. Use the same Google Sheet on every phone and PC to keep the roster the same.</p>
     </div>
   </div>
 </main>
