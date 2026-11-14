@@ -45,9 +45,13 @@
   .weekend-letter { color: #ff5722 !important; font-weight: bold; }
   .od { background: #2e7d32; color: white; font-weight: bold; cursor: pointer; }
   .of { background: #eeeeee; color: #555; cursor: pointer; }
+  .sl { background: #f9a825; color: #222; font-weight: bold; cursor: pointer; }
+  .al { background: #5e35b1; color: white; font-weight: bold; cursor: pointer; }
   .special-cell { background: #d6d6d6 !important; }
   .special-cell.od { background: #2e7d32 !important; color: white; }
   .special-cell.of { background: #d6d6d6 !important; color: #555; }
+  .special-cell.sl { background: #f9a825 !important; color: #222; }
+  .special-cell.al { background: #5e35b1 !important; color: white; }
   .empty { padding: 30px; text-align: center; color: #666; }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
   #logoPreview { margin-top: 10px; }
@@ -58,17 +62,49 @@
   .small-text { font-size: 12px; color: #666; margin: 0; }
   .print-header { display: none; }
 
+  #statusMenu {
+    display: none;
+    position: fixed;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+    z-index: 1000;
+    min-width: 120px;
+    overflow: hidden;
+  }
+
+  #statusMenu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 14px;
+    background: white;
+    color: #222;
+    border: none;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+  }
+
+  #statusMenu button:last-child {
+    border-bottom: none;
+  }
+
+  #statusMenu button:hover {
+    background: #e3f2fd;
+  }
+
   @media (max-width: 700px), (pointer: coarse) {
     .roster-tabs { gap: 12px; margin-bottom: 16px; }
     .roster-tab { padding: 20px 40px; font-size: 22px; min-width: 150px; min-height: 64px; border-radius: 12px; }
     .roster-tab.active { font-size: 22px; }
     th, td { padding: 12px 8px; font-size: 14px; }
     .staff-name { min-width: 170px; }
-    .od, .of { min-width: 52px; min-height: 52px; }
+    .od, .of, .sl, .al { min-width: 52px; min-height: 52px; }
   }
 
   @media print {
-    header, .main-tabs, .roster-tabs, .card, .actions, .no-print { display: none !important; }
+    header, .main-tabs, .roster-tabs, .card, .actions, .no-print, #statusMenu { display: none !important; }
     body { background: white; }
     main { padding: 0; }
     .print-header { display: block; margin-bottom: 10px; }
@@ -198,6 +234,11 @@
   </div>
 </main>
 
+<div id="statusMenu">
+  <button onclick="setStatusFromMenu('SL')">SL</button>
+  <button onclick="setStatusFromMenu('AL')">AL</button>
+</div>
+
 <script>
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -224,6 +265,9 @@ let syncTimer = null;
 let cloudSettings = {
   spreadsheetId: ""
 };
+
+let menuStaffId = null;
+let menuDateKey = null;
 
 const monthSelect = document.getElementById("month");
 const yearSelect = document.getElementById("year");
@@ -614,8 +658,9 @@ function toggleOD(staffId, dateKey) {
   saveHistory();
 
   const key = staffId + "|" + dateKey;
+  const currentStatus = state.roster[key];
 
-  if (state.roster[key] === "OD") {
+  if (currentStatus === "OD") {
     delete state.roster[key];
   } else {
     state.roster[key] = "OD";
@@ -624,6 +669,49 @@ function toggleOD(staffId, dateKey) {
   saveData();
   render();
 }
+
+function showStatusMenu(event, staffId, dateKey) {
+  event.preventDefault();
+
+  menuStaffId = staffId;
+  menuDateKey = dateKey;
+
+  const menu = document.getElementById("statusMenu");
+
+  menu.style.display = "block";
+  menu.style.left = event.clientX + "px";
+  menu.style.top = event.clientY + "px";
+}
+
+function setStatusFromMenu(status) {
+  if (menuStaffId === null || menuDateKey === null) {
+    return;
+  }
+
+  saveHistory();
+
+  const key = menuStaffId + "|" + menuDateKey;
+
+  state.roster[key] = status;
+
+  saveData();
+  hideStatusMenu();
+  render();
+}
+
+function hideStatusMenu() {
+  document.getElementById("statusMenu").style.display = "none";
+  menuStaffId = null;
+  menuDateKey = null;
+}
+
+document.addEventListener("click", function(event) {
+  const menu = document.getElementById("statusMenu");
+
+  if (menu.style.display === "block" && !menu.contains(event.target)) {
+    hideStatusMenu();
+  }
+});
 
 function clearMonth() {
   if (!confirm("Clear all OD marks for this month?")) {
@@ -1016,11 +1104,21 @@ function render() {
 
       const dateKey = year + "-" + String(month + 1).padStart(2, "0") + "-" + String(day).padStart(2, "0");
 
-      const status = state.roster[person.id + "|" + dateKey] === "OD" ? "OD" : "OFF";
+      const status = state.roster[person.id + "|" + dateKey] || "OFF";
+
+      let statusClass = "of";
+
+      if (status === "OD") {
+        statusClass = "od";
+      } else if (status === "SL") {
+        statusClass = "sl";
+      } else if (status === "AL") {
+        statusClass = "al";
+      }
 
       const special = isSpecialDay(date);
 
-      html += '<td class="' + (status === "OD" ? "od" : "of") + " " + (special ? "special-cell" : "") + '" onclick="toggleOD(' + person.id + ", '" + dateKey + '\')">' + status + "</td>";
+      html += '<td class="' + statusClass + " " + (special ? "special-cell" : "") + '" onclick="toggleOD(' + person.id + ", '" + dateKey + '\')" oncontextmenu="showStatusMenu(event, ' + person.id + ", '" + dateKey + '\')">' + status + "</td>";
     }
 
     html += "</tr>";
@@ -1056,28 +1154,8 @@ showLogoPreview();
 renderStaffLists();
 render();
 
-async function connectGoogleSilently() {
-  if (typeof google === "undefined") {
-    return;
-  }
-
-  const client = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
-    scope: "https://www.googleapis.com/auth/spreadsheets",
-    callback: function(response) {
-      googleAccessToken = response.access_token;
-      googleTokenExpiry = Date.now() + (response.expires_in * 1000);
-
-      updateGoogleStatus();
-      loadFromGoogleSheets();
-    }
-  });
-
-  client.requestAccessToken();
-}
-
 if (cloudSettings.spreadsheetId) {
-  connectGoogleSilently();
+  updateGoogleStatus();
 }
 </script>
 
