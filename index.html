@@ -654,65 +654,6 @@ function isSpecialDay(date) {
   return day === 0 || day === 6 || isPublicHoliday(date);
 }
 
-function toggleOD(staffId, dateKey) {
-  saveHistory();
-
-  const key = staffId + "|" + dateKey;
-  const currentStatus = state.roster[key];
-
-  if (currentStatus === "OD") {
-    delete state.roster[key];
-  } else {
-    state.roster[key] = "OD";
-  }
-
-  saveData();
-  render();
-}
-
-function showStatusMenu(event, staffId, dateKey) {
-  event.preventDefault();
-
-  menuStaffId = staffId;
-  menuDateKey = dateKey;
-
-  const menu = document.getElementById("statusMenu");
-
-  menu.style.display = "block";
-  menu.style.left = event.clientX + "px";
-  menu.style.top = event.clientY + "px";
-}
-
-function setStatusFromMenu(status) {
-  if (menuStaffId === null || menuDateKey === null) {
-    return;
-  }
-
-  saveHistory();
-
-  const key = menuStaffId + "|" + menuDateKey;
-
-  state.roster[key] = status;
-
-  saveData();
-  hideStatusMenu();
-  render();
-}
-
-function hideStatusMenu() {
-  document.getElementById("statusMenu").style.display = "none";
-  menuStaffId = null;
-  menuDateKey = null;
-}
-
-document.addEventListener("click", function(event) {
-  const menu = document.getElementById("statusMenu");
-
-  if (menu.style.display === "block" && !menu.contains(event.target)) {
-    hideStatusMenu();
-  }
-});
-
 function clearMonth() {
   if (!confirm("Clear all OD marks for this month?")) {
     return;
@@ -1118,7 +1059,7 @@ function render() {
 
       const special = isSpecialDay(date);
 
-      html += '<td class="' + statusClass + " " + (special ? "special-cell" : "") + '" onclick="toggleOD(' + person.id + ", '" + dateKey + '\')" oncontextmenu="showStatusMenu(event, ' + person.id + ", '" + dateKey + '\')">' + status + "</td>";
+      html += '<td class="' + statusClass + " " + (special ? "special-cell" : "") + '" data-staff="' + person.id + '" data-date="' + dateKey + '">' + status + "</td>";
     }
 
     html += "</tr>";
@@ -1128,6 +1069,79 @@ function render() {
 
   document.getElementById("roster").innerHTML = html;
 }
+
+function setStatusFromMenu(status) {
+  if (menuStaffId === null || menuDateKey === null) {
+    return;
+  }
+
+  saveHistory();
+
+  const key = menuStaffId + "|" + menuDateKey;
+
+  state.roster[key] = status;
+
+  saveData();
+  hideStatusMenu();
+  render();
+}
+
+function hideStatusMenu() {
+  document.getElementById("statusMenu").style.display = "none";
+  menuStaffId = null;
+  menuDateKey = null;
+}
+
+document.addEventListener("click", function(event) {
+  const menu = document.getElementById("statusMenu");
+
+  if (menu.style.display === "block" && !menu.contains(event.target)) {
+    hideStatusMenu();
+  }
+});
+
+document.getElementById("roster").addEventListener("click", function(event) {
+  const cell = event.target.closest("td");
+
+  if (!cell || !cell.dataset.staff || !cell.dataset.date) {
+    return;
+  }
+
+  const staffId = cell.dataset.staff;
+  const dateKey = cell.dataset.date;
+  const key = staffId + "|" + dateKey;
+  const currentStatus = state.roster[key] || "OFF";
+
+  saveHistory();
+
+  if (currentStatus === "OD") {
+    delete state.roster[key];
+  } else {
+    state.roster[key] = "OD";
+  }
+
+  saveData();
+  render();
+});
+
+document.getElementById("roster").addEventListener("contextmenu", function(event) {
+  const cell = event.target.closest("td");
+
+  if (!cell || !cell.dataset.staff || !cell.dataset.date) {
+    return;
+  }
+
+  event.preventDefault();
+
+  menuStaffId = cell.dataset.staff;
+  menuDateKey = cell.dataset.date;
+
+  const menu = document.getElementById("statusMenu");
+
+  menu.style.display = "block";
+  menu.style.left = event.clientX + "px";
+  menu.style.top = event.clientY + "px";
+});
 
 monthSelect.addEventListener("change", function() {
   render();
