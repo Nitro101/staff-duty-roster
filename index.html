@@ -38,7 +38,16 @@
   .roster-wrap { overflow-x: auto; background: white; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
   table { border-collapse: collapse; width: max-content; min-width: 100%; }
   th, td { border: 1px solid #cfd8dc; padding: 6px; text-align: center; font-size: 12px; white-space: nowrap; }
-  .staff-name { text-align: left; min-width: 150px; font-weight: bold; background: #f5f5f5; }
+  .staff-name {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    text-align: left;
+    min-width: 150px;
+    font-weight: bold;
+    background: #f5f5f5;
+    box-shadow: 2px 0 4px rgba(0,0,0,.08);
+  }
   .weekday-row th { background: #eceff1; font-weight: normal; }
   .date-row th { background: #eceff1; font-weight: bold; }
   .weekday-cell { background: white; }
