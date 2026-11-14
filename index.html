@@ -1101,6 +1101,8 @@ document.addEventListener("click", function(event) {
 });
 
 document.getElementById("roster").addEventListener("click", function(event) {
+  hideStatusMenu();
+
   const cell = event.target.closest("td");
 
   if (!cell || !cell.dataset.staff || !cell.dataset.date) {
@@ -1125,6 +1127,10 @@ document.getElementById("roster").addEventListener("click", function(event) {
 });
 
 document.getElementById("roster").addEventListener("contextmenu", function(event) {
+  if (event.button !== 2) {
+    return;
+  }
+
   const cell = event.target.closest("td");
 
   if (!cell || !cell.dataset.staff || !cell.dataset.date) {
