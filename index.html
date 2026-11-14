@@ -1125,10 +1125,14 @@ document.getElementById("roster").addEventListener("click", function(event) {
 
   saveHistory();
 
-  if (currentStatus === "OD") {
-    delete state.roster[key];
-  } else {
+  if (currentStatus === "OFF") {
     state.roster[key] = "OD";
+  } else if (currentStatus === "OD") {
+    state.roster[key] = "SL";
+  } else if (currentStatus === "SL") {
+    state.roster[key] = "AL";
+  } else {
+    delete state.roster[key];
   }
 
   saveData();
