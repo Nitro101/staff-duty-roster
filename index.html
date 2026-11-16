@@ -119,6 +119,8 @@
       background: white;
       margin: 0;
       padding: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     main {
@@ -128,14 +130,14 @@
 
     .print-header {
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .print-top-row {
       text-align: center;
-      font-size: 15px;
+      font-size: 18px;
       font-weight: bold;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
 
     .print-bottom-row {
@@ -143,7 +145,7 @@
       justify-content: space-between;
       align-items: flex-end;
       gap: 8px;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
 
     .print-company {
@@ -153,22 +155,22 @@
     }
 
     .print-company img {
-      max-height: 35px;
-      max-width: 110px;
+      max-height: 40px;
+      max-width: 130px;
     }
 
     .print-company-name {
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .print-section {
       font-size: 14px;
       font-weight: bold;
     }
 
+    .print-section {
+      font-size: 16px;
+      font-weight: bold;
+    }
+
     .print-prepared-by {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: bold;
     }
 
@@ -187,19 +189,77 @@
     }
 
     th, td {
-      font-size: 7.5px;
-      padding: 2px 1px;
-      border: 1px solid #999;
+      font-size: 10px;
+      padding: 4px 2px;
+      border: 1px solid #cfd8dc;
       white-space: nowrap;
       overflow: hidden;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
     .staff-name {
       position: static !important;
       min-width: 0 !important;
-      width: 110px !important;
-      font-size: 8px;
+      width: 130px !important;
+      font-size: 11px;
       box-shadow: none !important;
+      background: #f5f5f5 !important;
+    }
+
+    .weekday-row th {
+      background: #eceff1 !important;
+    }
+
+    .date-row th {
+      background: #eceff1 !important;
+    }
+
+    .od {
+      background: #2e7d32 !important;
+      color: white !important;
+      font-weight: bold;
+    }
+
+    .of {
+      background: #eeeeee !important;
+      color: #555 !important;
+    }
+
+    .sl {
+      background: #f9a825 !important;
+      color: #222 !important;
+      font-weight: bold;
+    }
+
+    .al {
+      background: #5e35b1 !important;
+      color: white !important;
+      font-weight: bold;
+    }
+
+    .special-cell {
+      background: #d6d6d6 !important;
+    }
+
+    .special-cell.od {
+      background: #2e7d32 !important;
+      color: white !important;
+    }
+
+    .special-cell.of {
+      background: #d6d6d6 !important;
+      color: #555 !important;
+    }
+
+    .special-cell.sl {
+      background: #f9a825 !important;
+      color: #222 !important;
+    }
+
+    .special-cell.al {
+      background: #5e35b1 !important;
+      color: white !important;
     }
 
     .od, .of, .sl, .al {
@@ -209,7 +269,7 @@
 
     @page {
       size: A4 landscape;
-      margin: 5mm;
+      margin: 4mm;
     }
   }
 </style>
