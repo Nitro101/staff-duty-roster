@@ -398,6 +398,21 @@ const FIXED_HOLIDAYS = ["01-01","03-21","04-27","05-01","06-16","08-09","09-24",
 
 const GOOGLE_CLIENT_ID = "406015748349-j23ai39p6cij0t42fgiet11os4nnsoco.apps.googleusercontent.com";
 
+const DEFAULT_NIGHT_STAFF = [
+  { id: 1001, name: "Ylene Brecht", section: "NIGHT" },
+  { id: 1002, name: "Alley Naidoo", section: "NIGHT" },
+  { id: 1003, name: "Bulekwa Rululu", section: "NIGHT" },
+  { id: 1004, name: "Notando Kubusi", section: "NIGHT" },
+  { id: 1005, name: "Tandi Maseti", section: "NIGHT" },
+  { id: 1006, name: "Themby Velem", section: "NIGHT" },
+  { id: 1007, name: "Ntombi Zanekile", section: "NIGHT" },
+  { id: 1008, name: "Nollie Mzobotsh", section: "NIGHT" },
+  { id: 1009, name: "Zuzi Adams", section: "NIGHT" },
+  { id: 1010, name: "Mari Smith", section: "NIGHT" },
+  { id: 1011, name: "Stella Webb", section: "NIGHT" },
+  { id: 1012, name: "Penny Magrimo", section: "NIGHT" }
+];
+
 let state = {
   companyName: "",
   companyLogo: "",
@@ -464,6 +479,10 @@ function loadData() {
   state.staff = state.staff || [];
   state.roster = state.roster || {};
   state.section = state.section || "DAY";
+
+  if (state.staff.length === 0) {
+    state.staff = DEFAULT_NIGHT_STAFF.slice();
+  }
 
   document.getElementById("spreadsheetId").value = cloudSettings.spreadsheetId;
 
